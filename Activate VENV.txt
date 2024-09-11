@@ -1,0 +1,12 @@
+py -m venv "E:\Research\Vue-Flusk\dnr\venv"
+.\venv\Scripts\Activate.ps1
+cd backend
+py main.py
+
+
+
+npm install -g @vue/cli
+cd frontend
+cd frontend
+npm run serve
+
