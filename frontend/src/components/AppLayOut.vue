@@ -43,6 +43,7 @@
             >
               Download GeoJSON Results
             </a>
+            <button @click="redirectToGeoJSON">Go to GeoJSON.io</button>
           </div>
         </section>
         <div class="row">
@@ -315,6 +316,9 @@ export default {
       link.href = this.downloadLinkGeoJson;
       link.download = "results.geojson";
       link.click();
+    },
+    redirectToGeoJSON() {
+      window.location.href = 'https://geojson.io/';
     },
   },
 };

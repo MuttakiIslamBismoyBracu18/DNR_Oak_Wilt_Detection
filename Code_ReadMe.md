@@ -47,9 +47,9 @@ The frontend provides the interface for users to upload images, view predictions
 
 2. Results Display:
    After the backend processes the images, the frontend displays the prediction results. Each prediction is shown with a corresponding color-coded marker:
-   - Green for "Not an Oak Wilt"
-   - Red for "This Picture Has Oak Wilt"
-   - Orange for "High Chance of Oak Wilt"
+   - Green for "CHANGES OF COLORS ON TREE LEAVES"
+   - Red for "THIS PICTURE HAS OAK WILT"
+   - Orange for "THERE'S A HIGH CHANCE OF OAK WILTS"
 
    These color markers are saved in the `frontend/src/assets` directory for easy customization.
 
@@ -58,7 +58,7 @@ The frontend provides the interface for users to upload images, view predictions
 
 4. Marker System:
    In the VueJS components, specific lines are responsible for rendering color markers based on the backend's prediction categories:
-   - Green Marker: Displayed when the image is classified as "Not an Oak Wilt."
+   - Green Marker: Displayed when the image is classified as "CHANGES OF COLORS ON TREE LEAVES"
    - Red Marker: Displayed when the image is classified as "This Picture Has Oak Wilt."
    - Orange Marker: Displayed for "High Chance of Oak Wilt."
 
