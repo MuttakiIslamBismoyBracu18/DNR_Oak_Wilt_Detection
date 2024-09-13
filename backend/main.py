@@ -11,15 +11,13 @@ import pandas as pd
 import logging
 import json
 
-print(tf.__version__)
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {'origins': "*"}})
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 DESTINATION_PATH = "E:/Research/Vue-Flusk/dnr/sample_images"
 RESULTS_PATH = "E:/Research/Vue-Flusk/dnr/Results"
-MODEL_PATH = 'E:/Research/Vue-Flusk/dnr/oak_wilt_demo1.h5'
+MODEL_PATH = 'E:/Research/Vue-Flusk/dnr/oak_wilt_demo2.h5'
 FEEDBACK_FILE_PATH = os.path.join(DESTINATION_PATH, 'feedback.json')
 
 logging.basicConfig(level=logging.INFO)
@@ -27,7 +25,6 @@ logging.basicConfig(level=logging.INFO)
 # Load the model
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# Route to check server status
 @app.route('/', methods=['GET'])
 def greetings():
     return "Hello, world!"
@@ -83,18 +80,20 @@ def upload_images():
                 return jsonify({"message": f"Error processing file {filename}"}), 500
 
     try:
-        results_df = pd.DataFrame(sum(results.values(), []))  # Flatten the list of results
-        csv_file_path = os.path.join(RESULTS_PATH, 'results.csv')
-        results_df.to_csv(csv_file_path, index=False)
-        logging.info(f"CSV file created at {csv_file_path}")
+        # Filter out "Not an Oak Wilt" from the results before saving to CSV and GeoJSON
+        filtered_results = sum([items for key, items in results.items() if key != "Not an Oak Wilt"], [])
+        if filtered_results:
+            results_df = pd.DataFrame(filtered_results)
+            csv_file_path = os.path.join(RESULTS_PATH, 'results.csv')
+            results_df.to_csv(csv_file_path, index=False)
+            logging.info(f"CSV file created at {csv_file_path}")
 
-        geojson_data = {
-            "type": "FeatureCollection",
-            "features": []
-        }
+            geojson_data = {
+                "type": "FeatureCollection",
+                "features": []
+            }
 
-        for category, items in results.items():
-            for item in items:
+            for item in filtered_results:
                 if item['latitude'] and item['longitude']:
                     feature = {
                         "type": "Feature",
@@ -112,10 +111,12 @@ def upload_images():
                     }
                     geojson_data["features"].append(feature)
 
-        geojson_file_path = os.path.join(RESULTS_PATH, 'results.geojson')
-        with open(geojson_file_path, 'w') as geojson_file:
-            json.dump(geojson_data, geojson_file)
-        logging.info(f"GeoJSON file created at {geojson_file_path}")
+            geojson_file_path = os.path.join(RESULTS_PATH, 'results.geojson')
+            with open(geojson_file_path, 'w') as geojson_file:
+                json.dump(geojson_data, geojson_file)
+            logging.info(f"GeoJSON file created at {geojson_file_path}")
+        else:
+            logging.info("No valid data for CSV or GeoJSON")
 
     except Exception as e:
         logging.error(f"Failed to write results files: {e}")

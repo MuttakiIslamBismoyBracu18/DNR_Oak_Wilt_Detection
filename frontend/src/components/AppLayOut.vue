@@ -9,6 +9,11 @@
         <section class="image-upload">
           <h1 class="row">{{ heading }}</h1>
           <div class="custom-file-upload">
+            <!-- New Button to Redirect to GeoJSON.io -->
+            <button class="geojson-button button" @click="redirectToGeoJsonIo">
+              Plot Old Data with GeoJSON
+            </button>
+
             <div class="file-upload-wrapper">
               <input
                 type="file"
@@ -43,7 +48,6 @@
             >
               Download GeoJSON Results
             </a>
-            <button @click="redirectToGeoJSON">Go to GeoJSON.io</button>
           </div>
         </section>
         <div class="row">
@@ -98,13 +102,19 @@
                 <p><strong>Longitude:</strong> {{ result.longitude }}</p>
                 <div>
                   <button
-                    @click="sendFeedback(result.filename, false)"
+                    @click="confirmFeedback(result.filename, false)"
                     class="feedback-button"
                   >
                     Oak Wilt
                   </button>
                   <button
-                    @click="sendFeedback(result.filename, true)"
+                    @click="confirmFeedback(result.filename, true)"
+                    class="feedback-button"
+                  >
+                    Dead Trees
+                  </button>
+                  <button
+                    @click="confirmFeedback(result.filename, true)"
                     class="feedback-button"
                   >
                     Healthy
@@ -120,6 +130,15 @@
         <div id="mapid" class="map-full-width"></div>
       </div>
     </div>
+
+    <!-- Confirmation Popup -->
+    <div v-if="showConfirmationPopup" class="popup-overlay">
+      <div class="popup">
+        <p>Do you really want to share feedback?</p>
+        <button @click="submitFeedback(true)" class="popup-button">Yes</button>
+        <button @click="submitFeedback(false)" class="popup-button">No</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -127,8 +146,6 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
-
-var vm = null;
 
 export default {
   name: "AppLayout",
@@ -144,6 +161,8 @@ export default {
       downloadLinkCsv: "",
       downloadLinkGeoJson: "",
       map: null,
+      showConfirmationPopup: false, // Track popup visibility
+      feedbackData: null, // Store feedback to submit after confirmation
     };
   },
   watch: {
@@ -152,10 +171,7 @@ export default {
     },
   },
   mounted() {
-    vm = this;
     this.initMap();
-    window.feedback = (filename, isCorrect) =>
-      this.feedback(filename, isCorrect);
   },
   computed: {
     filteredResults() {
@@ -287,48 +303,33 @@ export default {
       }
     },
     initMap() {
-      this.map = L.map("mapid").setView([43.0514, -86.23699], 14.5); // Save map instance to this.map
+      this.map = L.map("mapid").setView([43.0514, -85.23699], 8.5); // Save map instance to this.map
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "Oak Wilts will be shown here",
       }).addTo(this.map);
     },
-    sendFeedback(filename, isCorrect) {
-      axios
-        .post("http://localhost:5000/submit-feedback", {
-          filename,
-          isCorrect,
-        })
-        .then((response) => {
-          console.log("Feedback submitted:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error submitting feedback:", error);
-        });
+    confirmFeedback(filename, isCorrect) {
+      this.feedbackData = { filename, isCorrect };
+      this.showConfirmationPopup = true; // Show the confirmation popup
     },
-    downloadCSV() {
-      const link = document.createElement("a");
-      link.href = this.downloadLinkCsv;
-      link.download = "results.csv";
-      link.click();
+    submitFeedback(isConfirmed) {
+      if (isConfirmed) {
+        axios
+          .post("http://localhost:5000/submit-feedback", this.feedbackData)
+          .then((response) => {
+            console.log("Feedback submitted:", response.data);
+          })
+          .catch((error) => {
+            console.error("Error submitting feedback:", error);
+          });
+      }
+      this.showConfirmationPopup = false; // Close the popup
     },
-    downloadGeoJSON() {
-      const link = document.createElement("a");
-      link.href = this.downloadLinkGeoJson;
-      link.download = "results.geojson";
-      link.click();
-    },
-    redirectToGeoJSON() {
-      window.location.href = 'https://geojson.io/';
+    redirectToGeoJsonIo() {
+      window.open("https://geojson.io/", "_blank");
     },
   },
 };
-
-// eslint-disable-next-line no-unused-vars
-function submitMapFeedback(filename, isCorrect) {
-  if (vm) {
-    vm.sendFeedback(filename, isCorrect);
-  }
-}
 </script>
 
 <style scoped>
@@ -481,6 +482,22 @@ body,
   margin-top: 40px;
 }
 
+.geojson-button {
+  padding: 10px 60px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #6fc5e7;
+  color: rgb(8, 0, 0);
+  border: none;
+  border-radius: 4px;
+  margin-top: 40px;
+}
+
+.geojson-button:hover {
+  background-color: #4cae4c;
+}
+
 .file-upload-button:hover {
   background-color: #4cae4c;
 }
@@ -539,5 +556,32 @@ body,
 
 .feedback-button:hover {
   background-color: #f75656;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.popup-button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }
 </style>
