@@ -9,7 +9,7 @@ import PIL.ExifTags as ExifTags
 import pandas as pd
 import logging
 import json
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split #Newly Added
 from werkzeug.utils import secure_filename 
 
 app = Flask(__name__)
@@ -27,8 +27,8 @@ logging.basicConfig(level=logging.INFO)
 model = tf.keras.models.load_model(MODEL_PATH)
 
 # Initialize feedback accumulator
-FEEDBACK_BATCH_SIZE = 10
-feedback_accumulator = []
+FEEDBACK_BATCH_SIZE = 10 #Newly Added
+feedback_accumulator = [] #Newly Added
 
 @app.route('/', methods=['GET'])
 def greetings():
@@ -135,7 +135,7 @@ def predict_img(img):
     prediction = model.predict(img_expanded)
     return prediction[0][0]
 
-def generate_output_files(results):
+def generate_output_files(results): # New Function
     try:
         filtered_results = sum([items for key, items in results.items() if key != "Not an Oak Wilt"], [])
         if filtered_results:
@@ -189,7 +189,7 @@ def preprocess_image(img):
     img_normalized = img_resized / 255.0
     return img_normalized
 
-def retrain_model():
+def retrain_model(): #Newly Added
     if len(feedback_accumulator) < FEEDBACK_BATCH_SIZE:
         logging.info("Not enough feedback data to retrain. Waiting for more feedback samples.")
         return
